@@ -1,0 +1,145 @@
+﻿@model IEnumerable<Task4.Models.AppUser>
+@{
+    ViewData["Title"] = "User Management";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex gap-2">
+            <form method="post" id="actionForm" class="d-flex gap-2">
+                <button type="submit"
+                        class="btn btn-danger btn-sm d-flex align-items-center gap-1 tooltip-btn"
+                        formaction="@Url.Action("BlockUsers")"
+                        data-bs-toggle="tooltip"
+                        data-bs-placement="top"
+                        title="Block selected users">
+                    <i class="bi bi-lock"></i>
+                <span>Block</span>
+                </button>
+
+                <button type="submit"
+                        class="btn btn-success btn-sm d-flex align-items-center gap-1 tooltip-btn"
+                        formaction="@Url.Action("UnblockUsers")"
+                        data-bs-toggle="tooltip"
+                        data-bs-placement="top"
+                        title="Unblock selected users">
+                    <i class="bi bi-unlock"></i>
+                </button>
+
+                <button type="submit"
+                        class="btn btn-dark btn-sm d-flex align-items-center gap-1 tooltip-btn"
+                        formaction="@Url.Action("DeleteUsers")"
+                        data-bs-toggle="tooltip"
+                        data-bs-placement="top"
+                        title="Delete selected users">
+                    <i class="bi bi-trash"></i>
+                </button>
+
+            </form>
+        </div>
+
+        <form method="get" class="d-flex gap-2">
+            <div class="input-group input-group-sm">
+                <input type="text"
+                       name="search"
+                       class="form-control"
+                       placeholder="Filter users..."
+                       value="@Context.Request.Query["search"]" />
+                <button type="submit" class="btn btn-outline-secondary">
+                    <i class="bi bi-search"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th><input type="checkbox" id="selectAll" /></th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Status</th>
+                <th>Last Login</th>
+                <th>Registration</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in Model)
+            {
+                <tr>
+                    <td><input type="checkbox" name="userIds" value="@user.Id" form="actionForm" /></td>
+                    <td>@user.Name</td>
+                    <td>@user.Email</td>
+                    <td>
+                        <span class="badge @(user.IsBlocked ? "bg-danger" : "bg-success") p-2">
+                            @(user.IsBlocked ? "🚫 Blocked" : "✅ Active")
+                        </span>
+                    </td>
+                    <td>
+                        <div class="text-nowrap">
+                            <i class="bi bi-clock-history me-1"></i>
+                            <span class="last-login"
+                                  datetime="@user.LastLoginTime.ToString("o")"
+                                  title="@user.LastLoginTime.ToString("yyyy-MM-dd HH:mm:ss")">
+                                @user.LastLoginTime.ToLocalTime().ToString("dd MMM yyyy, HH:mm")
+                            </span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="text-nowrap">
+                            <i class="bi bi-person-plus me-1"></i>
+                            <span title="@user.RegistrationTime.ToString("yyyy-MM-dd HH:mm:ss")">
+                                @user.RegistrationTime.ToLocalTime().ToString("dd MMM yyyy, HH:mm")
+                            </span>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('selectAll').addEventListener('change', function() {
+                const checkboxes = document.querySelectorAll('input[name="userIds"]');
+                checkboxes.forEach(checkbox => checkbox.checked = this.checked);
+            });
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl, {
+                    delay: { show: 100, hide: 50 }
+                });
+            });
+        });
+        document.querySelectorAll('.last-login').forEach(el => {
+            const utcDateString = el.getAttribute('datetime');
+            const utcDate = new Date(utcDateString);
+            const localDate = new Date(utcDate.getTime() - (utcDate.getTimezoneOffset() * 60000));
+            el.innerHTML = timeAgo(localDate);
+        });
+
+        function timeAgo(date) {
+            const now = new Date();
+            const seconds = Math.floor((now - date) / 1000);
+            const intervals = {
+                year: 31536000,
+                month: 2592000,
+                week: 604800,
+                day: 86400,
+                hour: 3600,
+                minute: 60
+            };
+
+            for (const [unit, secondsInUnit] of Object.entries(intervals)) {
+                const interval = Math.floor(seconds / secondsInUnit);
+                if (interval >= 1) {
+                    const unitName = interval === 1 ? unit : `${unit}s`;
+                    return `${interval} ${unitName} ago`;
+                }
+            }
+            return 'Just now';
+        }
+    </script>
+}
