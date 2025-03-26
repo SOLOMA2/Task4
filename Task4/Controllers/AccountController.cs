@@ -11,12 +11,11 @@ namespace Task4.Controllers
     public class AccountController : Controller
     {
         private readonly SignInManager<AppUser> _signInManager;
-
-        private readonly UserManager<AppUser> userManager;
-        public AccountController(SignInManager<AppUser> _signInManager, UserManager<AppUser> userManager)
+        private readonly UserManager<AppUser> _userManager;
+        public AccountController(SignInManager<AppUser> signInManager, UserManager<AppUser> userManager)
         {
-            this._signInManager = _signInManager;
-            this.userManager = userManager;
+            _signInManager = signInManager;
+            _userManager = userManager;
         }
         public IActionResult Login()
         {
@@ -27,38 +26,27 @@ namespace Task4.Controllers
         {
             if (ModelState.IsValid)
             {
-                var user = await userManager.FindByNameAsync(model.Username);
-
-                if (user == null)
-                {
-                    ModelState.AddModelError("", "User not found");
-                    return View(model);
-                }
-                if (user.IsBlocked)
-                {
-                    ModelState.AddModelError("", "Account is blocked");
-                    return View(model);
-                }
-                var passwordValid = await userManager.CheckPasswordAsync(user, model.Password);
-                if (!passwordValid)
-                {
-                    ModelState.AddModelError("", "Invalid password");
-                    return View(model);
-                }
                 var result = await _signInManager.PasswordSignInAsync(
                     model.Username,
                     model.Password,
                     model.RememberMe,
-                    lockoutOnFailure: false);
+                    lockoutOnFailure: true);
+
+                if (result.IsLockedOut)
+                {
+                    ModelState.AddModelError("", "Account is blocked");
+                    return View(model);
+                }
 
                 if (result.Succeeded)
                 {
+                    var user = await _userManager.FindByNameAsync(model.Username);
                     user.LastLoginTime = DateTime.UtcNow;
-                    await userManager.UpdateAsync(user);
+                    await _userManager.UpdateAsync(user);
                     return RedirectToAction("Index", "UserManagement");
                 }
 
-                ModelState.AddModelError("", "Unexpected error");
+                ModelState.AddModelError("", "Invalid login attempt");
             }
             return View(model);
         }
@@ -78,7 +66,7 @@ namespace Task4.Controllers
                     UserName = model.Email
                 };
 
-                var result = await userManager.CreateAsync(user, model.Password);
+                var result = await _userManager.CreateAsync(user, model.Password);
                 if (result.Succeeded)
                 {
                     return RedirectToAction("Login", "Account");

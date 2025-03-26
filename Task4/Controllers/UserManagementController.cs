@@ -44,24 +44,25 @@ namespace Task4.Controllers
         public async Task<IActionResult> BlockUsers(List<string> userIds)
         {
             var currentUser = await _userManager.GetUserAsync(User);
-            bool currentUserBlocked = false;
+            bool curblockuser = false;
 
             foreach (var userId in userIds)
             {
                 var user = await _userManager.FindByIdAsync(userId);
                 if (user != null)
                 {
-                    user.IsBlocked = true;
+                    user.LockoutEnd = DateTime.UtcNow.AddYears(200);
+                    user.LockoutEnabled = true; 
                     await _userManager.UpdateAsync(user);
 
                     if (user.Id == currentUser?.Id)
                     {
-                        currentUserBlocked = true;
+                        curblockuser = true;
                     }
                 }
             }
 
-            if (currentUserBlocked)
+            if (curblockuser)
             {
                 await _signInManager.SignOutAsync();
                 return RedirectToAction("Login", "Account");
@@ -78,7 +79,8 @@ namespace Task4.Controllers
                 var user = await _userManager.FindByIdAsync(userId);
                 if (user != null)
                 {
-                    user.IsBlocked = false;
+                    user.LockoutEnd = null;
+                    user.LockoutEnabled = false;
                     await _userManager.UpdateAsync(user);
                 }
             }

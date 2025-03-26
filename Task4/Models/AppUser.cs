@@ -10,6 +10,5 @@ namespace Task4.Models
         public string? Name { get; set; }
         public DateTime RegistrationTime { get; set; } = DateTime.UtcNow;
         public DateTime LastLoginTime { get; set; } = DateTime.UtcNow;
-        public bool IsBlocked { get; set; } = false;
     }
 }

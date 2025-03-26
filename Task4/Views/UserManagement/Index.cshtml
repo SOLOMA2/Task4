@@ -71,8 +71,8 @@
                     <td>@user.Name</td>
                     <td>@user.Email</td>
                     <td>
-                        <span class="badge @(user.IsBlocked ? "bg-danger" : "bg-success") p-2">
-                            @(user.IsBlocked ? "🚫 Blocked" : "✅ Active")
+                        <span class="badge @(user.LockoutEnd?.UtcDateTime > DateTime.UtcNow ? "bg-danger" : "bg-success") p-2">
+                            @(user.LockoutEnd?.UtcDateTime > DateTime.UtcNow ? "🚫 Blocked" : "✅ Active")
                         </span>
                     </td>
                     <td>
